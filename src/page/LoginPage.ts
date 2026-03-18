@@ -6,7 +6,6 @@ export class LoginPage extends BasePage {
   private readonly passwordInput: Locator;
   private readonly loginButton: Locator;
   private readonly errorMessage: Locator;
-  private readonly inventoryTitle: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -14,11 +13,10 @@ export class LoginPage extends BasePage {
     this.passwordInput = this.page.locator("[data-test='password']");
     this.loginButton = this.page.locator("[data-test='login-button']");
     this.errorMessage = this.page.locator("[data-test='error']");
-    this.inventoryTitle = this.page.locator("[data-test='title']");
   }
 
   async goToLoginPage(): Promise<void> {
-    await this.navigate('');
+    await this.navigate('/');
     await this.usernameInput.waitFor({ state: 'visible' });
   }
 
@@ -40,20 +38,6 @@ export class LoginPage extends BasePage {
   async getErrorMessage(): Promise<string> {
     await this.errorMessage.waitFor({ state: 'visible' });
     return (await this.errorMessage.textContent()) ?? '';
-  }
-
-  async isErrorMessageVisible(): Promise<boolean> {
-    return this.errorMessage.isVisible();
-  }
-
-  async isInventoryTitleVisible(): Promise<boolean> {
-    await this.inventoryTitle.waitFor({ state: 'visible' });
-    return this.inventoryTitle.isVisible();
-  }
-
-  async getInventoryTitleText(): Promise<string> {
-    await this.inventoryTitle.waitFor({ state: 'visible' });
-    return (await this.inventoryTitle.textContent()) ?? '';
   }
 
   async getCurrentUrl(): Promise<string> {

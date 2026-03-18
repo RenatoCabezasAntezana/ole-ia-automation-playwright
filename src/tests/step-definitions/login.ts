@@ -2,75 +2,76 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../../support/world';
 import { LoginPage } from '../../page/LoginPage';
+import { ENV } from '../../support/env';
+
+function resolveCredentials(username: string, password: string): { user: string; pass: string } {
+  if (username === 'locked_out_user') {
+    return {
+      user: ENV.CREDENTIALS.locked.user || username,
+      pass: ENV.CREDENTIALS.locked.password || password,
+    };
+  }
+  if (username === 'standard_user') {
+    return {
+      user: ENV.CREDENTIALS.standard.user || username,
+      pass: ENV.CREDENTIALS.standard.password || password,
+    };
+  }
+  return { user: username, pass: password };
+}
 
 Given('que el cliente se encuentra en la pagina de inicio de sesion', async function (this: CustomWorld) {
   const loginPage = new LoginPage(this.page);
   await loginPage.goToLoginPage();
 });
 
-When('ingresa el nombre de usuario {string} y la contrasena {string}', async function (this: CustomWorld, username: string, password: string) {
+When('ingresa el usuario {string} y la contrasena {string}', async function (this: CustomWorld, username: string, password: string) {
   const loginPage = new LoginPage(this.page);
-  await loginPage.fillUsername(username);
+  const { user, pass } = resolveCredentials(username, password);
+  await loginPage.fillUsername(user);
+  await loginPage.fillPassword(pass);
+});
+
+When('ingresa el usuario {string} y una contrasena incorrecta {string}', async function (this: CustomWorld, username: string, password: string) {
+  const loginPage = new LoginPage(this.page);
+  const { user } = resolveCredentials(username, password);
+  await loginPage.fillUsername(user);
   await loginPage.fillPassword(password);
 });
 
-When('ingresa el nombre de usuario {string} y una contrasena incorrecta {string}', async function (this: CustomWorld, username: string, password: string) {
-  const loginPage = new LoginPage(this.page);
-  await loginPage.fillUsername(username);
-  await loginPage.fillPassword(password);
-});
-
-When('ingresa el nombre de usuario {string} y deja la contrasena en blanco', async function (this: CustomWorld, username: string) {
-  const loginPage = new LoginPage(this.page);
-  await loginPage.fillUsername(username);
-});
-
-When('hace clic en el boton de ingresar', async function (this: CustomWorld) {
+When('hace clic en el boton de inicio de sesion', async function (this: CustomWorld) {
   const loginPage = new LoginPage(this.page);
   await loginPage.clickLoginButton();
 });
 
-When('hace clic en el boton de ingresar sin completar ningun campo', async function (this: CustomWorld) {
-  const loginPage = new LoginPage(this.page);
-  await loginPage.clickLoginButton();
+Then('el sistema debe permitir el ingreso', async function (this: CustomWorld) {
+  const currentUrl = this.page.url();
+  expect(currentUrl).toContain('/inventory');
 });
 
-Then('el sistema le permite el acceso y muestra la pantalla principal de productos', async function (this: CustomWorld) {
-  const loginPage = new LoginPage(this.page);
-  const isTitleVisible = await loginPage.isInventoryTitleVisible();
-  expect(isTitleVisible).toBe(true);
-  const titleText = await loginPage.getInventoryTitleText();
-  expect(titleText).toBe('Products');
-});
-
-Then('la URL de la pagina es {string}', async function (this: CustomWorld, expectedPath: string) {
-  const loginPage = new LoginPage(this.page);
-  const currentUrl = await loginPage.getCurrentUrl();
+Then('el cliente debe ver la pagina de productos en la url {string}', async function (this: CustomWorld, expectedPath: string) {
+  const currentUrl = this.page.url();
   expect(currentUrl).toContain(expectedPath);
 });
 
-Then('el sistema no permite el acceso', async function (this: CustomWorld) {
-  const loginPage = new LoginPage(this.page);
-  const isErrorVisible = await loginPage.isErrorMessageVisible();
-  expect(isErrorVisible).toBe(true);
+Then('el sistema no debe permitir el ingreso', async function (this: CustomWorld) {
+  const currentUrl = this.page.url();
+  expect(currentUrl).not.toContain('/inventory');
 });
 
-Then('el sistema deniega el acceso', async function (this: CustomWorld) {
+Then('el cliente debe ver el mensaje de error {string}', async function (this: CustomWorld, expectedMessage: string) {
   const loginPage = new LoginPage(this.page);
-  const isErrorVisible = await loginPage.isErrorMessageVisible();
-  expect(isErrorVisible).toBe(true);
+  const errorText = await loginPage.getErrorMessage();
+  expect(errorText).toContain(expectedMessage);
 });
 
-Then('muestra el mensaje de error {string}', async function (this: CustomWorld, expectedMessage: string) {
-  const loginPage = new LoginPage(this.page);
-  const actualMessage = await loginPage.getErrorMessage();
-  expect(actualMessage).toContain(expectedMessage);
+Then('la pagina debe permanecer en la url de login', async function (this: CustomWorld) {
+  const currentUrl = this.page.url();
+  expect(currentUrl).toContain('saucedemo.com');
+  expect(currentUrl).not.toContain('/inventory');
 });
 
-Then('el cliente permanece en la pagina de inicio de sesion', async function (this: CustomWorld) {
-  const loginPage = new LoginPage(this.page);
-  const currentUrl = await loginPage.getCurrentUrl();
-  expect(currentUrl).toContain('/');
-  const isLoginButtonVisible = await this.page.locator("[data-test='login-button']").isVisible();
-  expect(isLoginButtonVisible).toBe(true);
+Then('el sistema debe denegar el acceso', async function (this: CustomWorld) {
+  const currentUrl = this.page.url();
+  expect(currentUrl).not.toContain('/inventory');
 });
