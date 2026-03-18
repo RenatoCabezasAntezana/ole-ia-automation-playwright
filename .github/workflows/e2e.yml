@@ -34,6 +34,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run E2E tests
+        id: run-tests
         env:
           ENV_NAME: dev
           BASE_URL: ${{ secrets.BASE_URL }}
@@ -46,10 +47,12 @@ jobs:
           CUCUMBER_PUBLISH_TOKEN: ${{ secrets.CUCUMBER_PUBLISH_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.tags }}" ]; then
-            npm run test:dev -- --tags "${{ github.event.inputs.tags }}"
+            npm run test:dev -- --tags "${{ github.event.inputs.tags }}" 2>&1 | tee test-output.txt
           else
-            npm run test:dev
+            npm run test:dev 2>&1 | tee test-output.txt
           fi
+          CUCUMBER_URL=$(grep -o 'https://reports.cucumber.io/reports/[^[:space:]]*' test-output.txt | head -1)
+          echo "cucumber_url=$CUCUMBER_URL" >> $GITHUB_OUTPUT
 
       - name: Upload HTML report
         if: always()
@@ -67,3 +70,58 @@ jobs:
           path: reports/evidence/
           retention-days: 30
           if-no-files-found: ignore
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ job.status == 'success' && '✅ E2E Tests Passed' || '❌ E2E Tests Failed' }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repositorio:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Rama:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Disparado por:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n${{ github.sha && substring(github.sha, 0, 7) }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "🔁 Ver Actions Run" },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "📊 Cucumber Report" },
+                      "url": "${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}"
+                    }
+                  ]
+                }
+              ]
+            }
