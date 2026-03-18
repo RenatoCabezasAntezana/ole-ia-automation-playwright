@@ -36,7 +36,7 @@ jobs:
       - name: Run E2E tests
         env:
           ENV_NAME: dev
-          BASE_URL: ${{ secrets.BASE_URL }}
+          BASE_URL: 'https://www.saucedemo.com'
           HEADLESS: 'true'
           TIMEOUT: '30000'
           STANDARD_USER: ${{ secrets.STANDARD_USER }}
