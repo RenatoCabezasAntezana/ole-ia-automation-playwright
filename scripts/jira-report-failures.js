@@ -1,12 +1,11 @@
 const fs = require('fs');
 const https = require('https');
-const path = require('path');
-const os = require('os');
 
 const JIRA_URL = process.env.JIRA_URL?.replace(/\/$/, '');
 const JIRA_EMAIL = process.env.JIRA_EMAIL;
 const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
 const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || 'SB';
+const JIRA_TICKET_KEY = process.env.JIRA_TICKET_KEY || null;
 const REPORT_PATH = 'reports/cucumber-report.json';
 const SURGE_URL = 'https://ole-ia-automation-playwright.surge.sh';
 
@@ -127,6 +126,19 @@ async function createBug(scenario, error, screenshotBuffer) {
   const bugKey = res.body.key;
   console.log(`✅ Bug creado: ${bugKey} — ${summary}`);
 
+  if (JIRA_TICKET_KEY) {
+    const linkRes = await jiraRequest('POST', '/rest/api/3/issueLink', {
+      type: { name: 'Blocks' },
+      inwardIssue: { key: bugKey },
+      outwardIssue: { key: JIRA_TICKET_KEY },
+    });
+    if (linkRes.status === 201) {
+      console.log(`🔗 ${bugKey} vinculado como "blocks" a ${JIRA_TICKET_KEY}`);
+    } else {
+      console.log(`⚠️  No se pudo vincular ${bugKey} a ${JIRA_TICKET_KEY} (status ${linkRes.status})`);
+    }
+  }
+
   if (screenshotBuffer) {
     const filename = `evidence-${scenario.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`;
     const status = await attachScreenshot(bugKey, screenshotBuffer, filename);
@@ -140,35 +152,87 @@ async function createBug(scenario, error, screenshotBuffer) {
   return bugKey;
 }
 
+async function commentOnTicket(ticketKey, passed, failed, bugKeys) {
+  const status = failed.length === 0 ? '✅ Todos los tests pasaron' : `❌ ${failed.length} escenario(s) fallaron`;
+  const passedLines = passed.map(s => `- ✅ ${s}`).join('\n');
+  const failedLines = failed.map(s => `- ❌ ${s}`).join('\n');
+  const bugsLine = bugKeys.length > 0
+    ? `\n🐛 Bugs creados: ${bugKeys.join(', ')}`
+    : '';
+
+  const text = [
+    `${status} en la ejecución de GitHub Actions.`,
+    '',
+    passed.length > 0 ? `*Escenarios pasados:*\n${passedLines}` : '',
+    failed.length > 0 ? `*Escenarios fallidos:*\n${failedLines}` : '',
+    bugsLine,
+    '',
+    `📊 Reporte: ${SURGE_URL}`,
+  ].filter(l => l !== undefined).join('\n');
+
+  const res = await jiraRequest('POST', `/rest/api/3/issue/${ticketKey}/comment`, {
+    body: {
+      type: 'doc',
+      version: 1,
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text }]
+      }]
+    }
+  });
+
+  if (res.status === 201) {
+    console.log(`💬 Comentario agregado en ${ticketKey}`);
+  } else {
+    console.log(`⚠️  No se pudo comentar en ${ticketKey} (status ${res.status})`);
+  }
+}
+
 async function main() {
   const report = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf8'));
   const failures = [];
+  const passed = [];
 
   for (const feature of report) {
     for (const element of feature.elements || []) {
       const failedStep = element.steps?.find(s => s.result?.status === 'failed');
-      if (!failedStep) continue;
+      if (failedStep) {
+        const scenarioSlug = element.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+        const screenshotPath = `reports/evidence/evidence-${scenarioSlug}.png`;
+        const screenshotBuffer = fs.existsSync(screenshotPath) ? fs.readFileSync(screenshotPath) : null;
 
-      const scenarioSlug = element.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      const screenshotPath = `reports/evidence/evidence-${scenarioSlug}.png`;
-      const screenshotBuffer = fs.existsSync(screenshotPath) ? fs.readFileSync(screenshotPath) : null;
-
-      failures.push({
-        scenario: element.name,
-        error: failedStep.result?.error_message?.split('\n')[0] || 'Unknown error',
-        screenshotBuffer,
-      });
+        failures.push({
+          scenario: element.name,
+          error: failedStep.result?.error_message?.split('\n')[0] || 'Unknown error',
+          screenshotBuffer,
+        });
+      } else {
+        passed.push(element.name);
+      }
     }
   }
 
+  const bugKeys = [];
+
   if (failures.length === 0) {
     console.log('✅ No failures found — no bugs to report.');
-    return;
+  } else {
+    console.log(`\n🐛 Found ${failures.length} failed scenario(s). Reporting to Jira...\n`);
+    for (const { scenario, error, screenshotBuffer } of failures) {
+      const key = await createBug(scenario, error, screenshotBuffer);
+      if (key) bugKeys.push(key);
+    }
   }
 
-  console.log(`\n🐛 Found ${failures.length} failed scenario(s). Reporting to Jira...\n`);
-  for (const { scenario, error, screenshotBuffer } of failures) {
-    await createBug(scenario, error, screenshotBuffer);
+  if (JIRA_TICKET_KEY) {
+    await commentOnTicket(
+      JIRA_TICKET_KEY,
+      passed,
+      failures.map(f => f.scenario),
+      bugKeys
+    );
+  } else {
+    console.log('ℹ️  JIRA_TICKET_KEY not set — skipping ticket comment.');
   }
 }
 
