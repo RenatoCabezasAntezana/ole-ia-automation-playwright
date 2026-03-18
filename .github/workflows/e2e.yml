@@ -55,6 +55,7 @@ jobs:
       - name: Deploy report to Surge
         if: always()
         run: |
+          cp reports/cucumber-report.html reports/index.html
           npm install -g surge
           surge reports/ ole-ia-automation-playwright.surge.sh --token ${{ secrets.SURGE_TOKEN }}
 
