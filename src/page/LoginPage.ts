@@ -6,7 +6,6 @@ export class LoginPage extends BasePage {
   private readonly passwordInput: Locator;
   private readonly loginButton: Locator;
   private readonly errorMessage: Locator;
-  private readonly inventoryTitle: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -14,49 +13,38 @@ export class LoginPage extends BasePage {
     this.passwordInput = this.page.locator("[data-test='password']");
     this.loginButton = this.page.locator("[data-test='login-button']");
     this.errorMessage = this.page.locator("[data-test='error']");
-    this.inventoryTitle = this.page.locator("[data-test='title']");
   }
 
-  async goToLoginPage(): Promise<void> {
+  async navegarAlLogin(): Promise<void> {
     await this.navigate('');
     await this.usernameInput.waitFor({ state: 'visible' });
   }
 
-  async fillUsername(username: string): Promise<void> {
+  async ingresarUsuario(usuario: string): Promise<void> {
     await this.usernameInput.waitFor({ state: 'visible' });
-    await this.usernameInput.fill(username);
+    await this.usernameInput.fill(usuario);
   }
 
-  async fillPassword(password: string): Promise<void> {
+  async ingresarContrasena(contrasena: string): Promise<void> {
     await this.passwordInput.waitFor({ state: 'visible' });
-    await this.passwordInput.fill(password);
+    await this.passwordInput.fill(contrasena);
   }
 
-  async clickLoginButton(): Promise<void> {
+  async clickLogin(): Promise<void> {
     await this.loginButton.waitFor({ state: 'visible' });
     await this.loginButton.click();
   }
 
-  async getErrorMessage(): Promise<string> {
+  async obtenerMensajeError(): Promise<string> {
     await this.errorMessage.waitFor({ state: 'visible' });
     return (await this.errorMessage.textContent()) ?? '';
   }
 
-  async isErrorMessageVisible(): Promise<boolean> {
+  async esErrorVisible(): Promise<boolean> {
     return this.errorMessage.isVisible();
   }
 
-  async isInventoryTitleVisible(): Promise<boolean> {
-    await this.inventoryTitle.waitFor({ state: 'visible' });
-    return this.inventoryTitle.isVisible();
-  }
-
-  async getInventoryTitleText(): Promise<string> {
-    await this.inventoryTitle.waitFor({ state: 'visible' });
-    return (await this.inventoryTitle.textContent()) ?? '';
-  }
-
-  async getCurrentUrl(): Promise<string> {
+  async obtenerUrlActual(): Promise<string> {
     return this.page.url();
   }
 }
