@@ -82,5 +82,5 @@ jobs:
               "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "branch": "${{ github.ref_name }}",
               "status": "${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}",
-              "resultado": "${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}"
+              "resultado": "<${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}|📊 Ver Reporte>"
             }
