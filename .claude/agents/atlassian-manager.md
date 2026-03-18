@@ -124,7 +124,7 @@ addCommentToJiraIssue({
   - Scenario: {nombre}\n\n
   **Feature file:** src/tests/features/{modulo}.feature\n
   **Comando de ejecución:** npm run test:dev -- --tags \"@{tag}\"\n
-  **📊 Reporte:** {cucumber_reports_url} (si está disponible)\n
+  **📊 Reporte:** https://ole-ia-automation-playwright.surge.sh\n
   **🔁 GitHub Actions:** {github_actions_run_url} (si está disponible)"
 })
 ```
@@ -136,7 +136,7 @@ addCommentToJiraIssue({
   comment: "❌ Tests fallidos en la ejecución automatizada.\n\n
   **Bug creado:** OLE-{bug-key}\n
   **Error:** {descripción breve del error}\n
-  **📊 Reporte:** {cucumber_reports_url} (si está disponible)\n
+  **📊 Reporte:** https://ole-ia-automation-playwright.surge.sh\n
   **🔁 GitHub Actions:** {github_actions_run_url} (si está disponible)\n
   **Acción requerida:** revisar el bug vinculado para detalles."
 })

@@ -191,7 +191,7 @@ npm run test:dev -- --tags "@{modulo}"    # solo un módulo
                           ⚠️  Si el push falla: DETENER y reportar.
 
 6. Claude Code         → Ejecuta npm run test:dev -- --tags "@{modulo}" localmente
-                          Captura la URL de Cucumber Reports del stdout
+                          URL del reporte: https://ole-ia-automation-playwright.surge.sh
                           (Los tests en rojo son esperados si hay discrepancias del paso 4)
 
 7. atlassian-manager   → Por cada discrepancia del paso 4 (si las hay):
@@ -200,12 +200,12 @@ npm run test:dev -- --tags "@{modulo}"    # solo un módulo
 
 8. github-manager      → Crea PR feature/{ticket-key}-{modulo} → main
                           Título: [AUTO] {ticket-key} — {Modulo}: E2E automation
-                          Body: tabla de escenarios + URL Cucumber Reports + bugs creados
+                          Body: tabla de escenarios + URL Surge + bugs creados
                           Devuelve la URL del PR
 
 9. atlassian-manager   → Comenta en el ticket:
                           - Escenarios cubiertos
-                          - 📊 Cucumber Reports URL
+                          - 📊 Reporte: https://ole-ia-automation-playwright.surge.sh
                           - 🔀 PR URL
                           - 🐛 Bugs creados (si los hay)
 ```
@@ -229,7 +229,7 @@ Nunca actuar con información asumida cuando un paso anterior no completó.
      flujo roto) → NO invocar healer, ir directo al paso 4
 
 3a. playwright-healer → Diagnostica y repara el código (MÁXIMO 2 INTENTOS)
-   - Intento 1: healer repara → Claude Code re-ejecuta tests → captura URL Cucumber Reports
+   - Intento 1: healer repara → Claude Code re-ejecuta tests → URL del reporte: https://ole-ia-automation-playwright.surge.sh
    - Si sigue fallando: Intento 2 → re-ejecutar → capturar URL
    - Si tras el intento 2 sigue fallando → ir al paso 4
    - Si el error es de la app → ir al paso 4
@@ -255,7 +255,7 @@ Nunca actuar con información asumida cuando un paso anterior no completó.
    Pasar SIEMPRE:
    - Escenario fallido + mensaje de error exacto
    - screenshot_path del healer (para adjuntar como evidencia via curl)
-   - URL de Cucumber Reports (si está disponible)
+   - URL del reporte Surge (si está disponible)
    - Ticket de la historia original para vincular con "Blocks"
    Luego comenta en la historia informando del fallo, el bug creado y los intentos realizados.
 ```
@@ -317,7 +317,7 @@ Agent(github-manager,
   "Crea un PR desde feature/{ticket-key}-{modulo} hacia main.
    Título: [AUTO] {ticket-key} — {Modulo}: E2E automation
    Escenarios cubiertos: {lista de escenarios}
-   URL Cucumber Reports: {url}
+   URL Reporte: https://ole-ia-automation-playwright.surge.sh
    Bugs creados: {lista de bugs si los hay}
    Devuelve la URL del PR."
 )
@@ -326,7 +326,7 @@ Agent(github-manager,
 Agent(atlassian-manager,
   "Comenta en el ticket {SB-XX} que los tests fueron automatizados.
    Escenarios cubiertos: {lista}.
-   📊 Cucumber Reports: {url}
+   📊 Reporte: https://ole-ia-automation-playwright.surge.sh
    🔀 PR: {pr_url}
    Bugs creados: {lista si los hay}"
 )
@@ -352,7 +352,7 @@ Agent(atlassian-manager,
    Escenario: {nombre}
    Error: {mensaje exacto}
    Screenshot: {ruta_absoluta}
-   URL Cucumber Reports: {url}
+   URL Reporte: https://ole-ia-automation-playwright.surge.sh
    Vincúlalo con 'Blocks' al ticket {SB-XX} y comenta en la historia."
 )
 ```
@@ -369,5 +369,5 @@ Presenta siempre un resumen ejecutivo:
    ```bash
    npm run test:dev -- --tags "@{modulo}"
    ```
-5. URL de Cucumber Reports
+5. 📊 URL del reporte: https://ole-ia-automation-playwright.surge.sh
 6. Bugs creados (si los hay) con sus keys

@@ -134,7 +134,7 @@ npm run test:dev -- --tags "@{modulo}"
 
 ## Reporte
 
-📊 Cucumber Reports: {cucumber_reports_url}
+📊 Reporte: https://ole-ia-automation-playwright.surge.sh
 
 {seccion_bugs_si_hay}
 
