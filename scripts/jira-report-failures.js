@@ -149,17 +149,9 @@ async function main() {
       const failedStep = element.steps?.find(s => s.result?.status === 'failed');
       if (!failedStep) continue;
 
-      // Screenshot está en los embeddings del After hook
-      let screenshotBuffer = null;
-      for (const hook of element.after || []) {
-        for (const embedding of hook.embeddings || []) {
-          if (embedding.mime_type === 'image/png') {
-            screenshotBuffer = Buffer.from(embedding.data, 'base64');
-            break;
-          }
-        }
-        if (screenshotBuffer) break;
-      }
+      const scenarioSlug = element.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const screenshotPath = `reports/evidence/evidence-${scenarioSlug}.png`;
+      const screenshotBuffer = fs.existsSync(screenshotPath) ? fs.readFileSync(screenshotPath) : null;
 
       failures.push({
         scenario: element.name,

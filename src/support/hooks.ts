@@ -53,6 +53,9 @@ After(async function (this: CustomWorld, scenario) {
   if (scenario.result?.status === Status.FAILED) {
     const screenshot = await this.page.screenshot({ fullPage: true });
     this.attach(screenshot, 'image/png');
+
+    const scenarioSlug = scenario.pickle.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    fs.writeFileSync(`reports/evidence/evidence-${scenarioSlug}.png`, screenshot);
   }
   await this.context.close();
 });
