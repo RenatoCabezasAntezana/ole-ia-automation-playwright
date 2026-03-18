@@ -55,9 +55,9 @@ jobs:
       - name: Report failures to Jira
         if: always()
         env:
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_URL: ${{ secrets.ATLASSIAN_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.ATLASSIAN_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
           JIRA_PROJECT_KEY: SB
         run: node scripts/jira-report-failures.js
 
