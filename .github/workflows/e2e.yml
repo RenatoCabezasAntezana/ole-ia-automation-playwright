@@ -76,52 +76,11 @@ jobs:
         uses: slackapi/slack-github-action@v2.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
+          webhook-type: webhook-trigger
           payload: |
             {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "${{ job.status == 'success' && '✅ E2E Tests Passed' || '❌ E2E Tests Failed' }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Repositorio:*\n${{ github.repository }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Rama:*\n${{ github.ref_name }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Disparado por:*\n${{ github.actor }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Commit:*\n${{ github.sha && substring(github.sha, 0, 7) }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "🔁 Ver Actions Run" },
-                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    },
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "📊 Cucumber Report" },
-                      "url": "${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}"
-                    }
-                  ]
-                }
-              ]
+              "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "branch": "${{ github.ref_name }}",
+              "status": "${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}",
+              "resultado": "${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}"
             }
