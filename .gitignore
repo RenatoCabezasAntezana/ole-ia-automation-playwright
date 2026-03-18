@@ -1,0 +1,10 @@
+node_modules/
+dist/
+reports/
+.env
+.env.*
+!.env.example
+.playwright-mcp/
+allure-results/
+allure-report/
+.DS_Store

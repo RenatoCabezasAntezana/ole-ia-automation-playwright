@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "mcp__playwright__*",
+      "mcp__atlassian__*",
+      "Agent(*)",
+      "WebFetch(*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

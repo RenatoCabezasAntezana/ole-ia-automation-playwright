@@ -1,0 +1,26 @@
+{
+  "name": "ole-ia-automation-playwright",
+  "version": "1.0.0",
+  "description": "Playwright automation with POM and Cucumber",
+  "scripts": {
+    "test": "ENV_NAME=dev cucumber-js",
+    "test:dev": "ENV_NAME=dev cucumber-js",
+    "test:staging": "ENV_NAME=staging cucumber-js",
+    "test:prod": "ENV_NAME=prod cucumber-js",
+    "test:tags": "ENV_NAME=dev cucumber-js --tags",
+    "test:tags:staging": "ENV_NAME=staging cucumber-js --tags",
+    "report": "node src/support/report.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.3.2",
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^20.12.12",
+    "multiple-cucumber-html-reporter": "^3.6.2",
+    "playwright": "^1.44.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

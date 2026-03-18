@@ -1,0 +1,69 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Cucumber tags (ej: @smoke, @login)'
+        required: false
+        default: ''
+
+jobs:
+  e2e:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        env:
+          ENV_NAME: dev
+          BASE_URL: ${{ secrets.BASE_URL }}
+          HEADLESS: 'true'
+          TIMEOUT: '30000'
+          STANDARD_USER: ${{ secrets.STANDARD_USER }}
+          STANDARD_PASSWORD: ${{ secrets.STANDARD_PASSWORD }}
+          LOCKED_USER: ${{ secrets.LOCKED_USER }}
+          LOCKED_PASSWORD: ${{ secrets.LOCKED_PASSWORD }}
+          CUCUMBER_PUBLISH_TOKEN: ${{ secrets.CUCUMBER_PUBLISH_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.tags }}" ]; then
+            npm run test:dev -- --tags "${{ github.event.inputs.tags }}"
+          else
+            npm run test:dev
+          fi
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: reports/cucumber-report.html
+          retention-days: 30
+
+      - name: Upload evidence screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: reports/evidence/
+          retention-days: 30
+          if-no-files-found: ignore
