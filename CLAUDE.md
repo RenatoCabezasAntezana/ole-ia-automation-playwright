@@ -39,45 +39,39 @@ Invocar el agente `playwright-generator` pasándole el plan del paso 3:
 - El generator debe devolver explícitamente si detectó **discrepancias entre el ticket y la app** que harán fallar algún test intencionalmente
 - ⚠️ Si falla o hay errores de compilación sin resolver: detener y reportar. No continuar.
 
-### Paso 5 — Commitear y pushear el código generado
+### Paso 5 — Ejecutar los tests y capturar el reporte
+Claude Code (orquestador) ejecuta directamente en modo headless:
+```bash
+HEADLESS=true npm run test:dev -- --tags "@{modulo}"
+```
+- El reporte HTML se genera en `reports/cucumber-report.html`
+- La URL permanente del reporte es: `https://ole-ia-automation-playwright.surge.sh`
+- ⚠️ Si el comando falla por error de configuración (no por tests en rojo): detener y reportar. Los tests en rojo son esperados si hay discrepancias conocidas del Paso 4.
+
+### Paso 6 — Commitear y pushear el código generado
 Invocar el agente `github-manager`:
 - Stagear solo los archivos del módulo generado
 - Commitear con mensaje: `feature({ticket-key}): add {modulo} E2E tests`
 - Pushear a la rama `feature/{ticket-key}-{modulo}`
 - ⚠️ Si el push falla: detener y reportar. No continuar.
 
-### Paso 6 — Ejecutar los tests y capturar el reporte
-Claude Code (orquestador) ejecuta directamente:
-```bash
-npm run test:dev -- --tags "@{modulo}"
-```
-- El reporte HTML se genera en `reports/cucumber-report.html`
-- La URL permanente del reporte es: `https://ole-ia-automation-playwright.surge.sh`
-- ⚠️ Si el comando falla por error de configuración (no por tests en rojo): detener y reportar. Los tests en rojo son esperados si hay discrepancias conocidas del Paso 4.
-
-### Paso 7 — Crear bugs por discrepancias conocidas (si las hay)
-Si el `playwright-generator` reportó discrepancias entre el ticket y el comportamiento real de la app:
-Invocar el agente `atlassian-manager` **una vez por cada discrepancia**:
-- Crear bug `[AUTO]` con summary: `[AUTO] Discrepancia: {descripción breve}`
-- Descripción del bug: escenario afectado, valor esperado según ticket, valor real de la app
-- Vincular con "Blocks" al ticket original
-- ⚠️ Verificar con JQL si ya existe un bug `[AUTO]` para la misma discrepancia antes de crear uno nuevo
-
-### Paso 8 — Crear Pull Request
+### Paso 7 — Crear Pull Request
 Invocar el agente `github-manager`:
 - Crear PR desde `feature/{ticket-key}-{modulo}` hacia `main`
 - Título: `[AUTO] {ticket-key} — {Modulo}: E2E automation`
-- Incluir en el cuerpo: tabla de escenarios, archivos generados, URL de Cucumber Reports
-- Si se crearon bugs en el paso 7, mencionarlos en el PR
+- Incluir en el cuerpo: tabla de escenarios, archivos generados, URL del reporte Surge
 - Devolver la URL del PR creado
 
-### Paso 9 — Reportar en Jira
-Invocar el agente `atlassian-manager`:
-- Comentar en el ticket con los escenarios cubiertos y los archivos creados
-- Incluir el comando de ejecución: `npm run test:dev -- --tags "@{modulo}"`
-- Incluir `📊 Reporte: https://ole-ia-automation-playwright.surge.sh`
-- Incluir `🔀 PR: {pr_url}`
-- Si se crearon bugs en el paso 7, mencionarlos con sus keys
+> El flujo del orquestador termina aquí. El reporte en Jira y la creación de bugs
+> son responsabilidad de GitHub Actions al ejecutarse la pipeline.
+
+---
+
+> ⚠️ **Todo el reporte en Jira ocurre desde CI (GitHub Actions)**, no desde el orquestador.
+> Al hacer push en el paso 5, GitHub Actions ejecuta los tests y al finalizar:
+> - `scripts/jira-report-failures.js` detecta escenarios fallidos, crea bugs `[AUTO]`
+>   en Jira y adjunta el screenshot de evidencia (guardado en disco solo en CI)
+> - Comenta en el ticket original con los resultados de la ejecución y la URL del reporte
 
 ---
 
@@ -102,18 +96,13 @@ Invocar `github-manager`:
 - Pushear al remoto (el CI re-ejecutará automáticamente en GitHub Actions)
 - Invocar `atlassian-manager` para comentar en el ticket que el fix fue aplicado + URL del reporte
 
-### Paso 4 — Capturar evidencia del bug de la app
-Invocar `playwright-healer` para:
-- Reproducir el fallo en la app
-- Guardar screenshot en `reports/evidence/evidence-bug-{modulo}-{timestamp}.png`
-- Devolver la ruta absoluta del screenshot
-
-### Paso 5 — Crear bug en Jira
-Invocar `atlassian-manager`:
-- Crear bug `[AUTO]` con el error exacto
-- Adjuntar el screenshot como evidencia
-- Vincular con "Blocks" al ticket original
-- Comentar en la historia informando del fallo, el bug creado y la URL de Cucumber Reports
+### Paso 4 — Bug de la app
+Si el error es de la app (no del código de automatización):
+- El test seguirá fallando intencionalmente — el `.feature` es el contrato del negocio
+- Commitear los archivos tal como están con `github-manager` y pushear
+- GitHub Actions detectará el fallo, `jira-report-failures.js` creará el bug `[AUTO]`
+  en Jira automáticamente con el screenshot de evidencia adjunto
+- No es necesario crear el bug manualmente desde el orquestador
 
 ---
 

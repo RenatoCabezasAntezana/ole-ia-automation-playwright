@@ -127,6 +127,15 @@ Then {resultado esperado}
 3. **Lenguaje de negocio** — qué hace el usuario, no cómo funciona el código
 4. **Cobertura completa**: happy path, errores y edge cases
 5. **Tags obligatorios**: `@smoke` para happy paths, `@regression` para variantes
+6. **El ticket es la fuente de verdad** — los valores esperados (URLs, mensajes de error, textos, etc.) se toman **literalmente de los criterios de aceptación del ticket**. La exploración de la app sirve **únicamente** para identificar selectores y estructura UI. Si la app muestra un valor distinto al del ticket, anótalo como discrepancia pero **nunca sobreescribas el criterio del ticket** en los escenarios BDD.
+
+   **Ejemplo correcto:**
+   - Ticket dice: redirige a `/products`
+   - App redirige a: `/inventory.html`
+   - El escenario BDD debe decir: `/products` ← lo que el negocio exige
+   - Anotar en el plan: `> ⚠️ Discrepancia: el ticket espera /products pero la app redirige a /inventory.html`
+
+   **Nunca** escribas `/inventory.html` en un escenario BDD si el ticket dice `/products`.
 
 ---
 

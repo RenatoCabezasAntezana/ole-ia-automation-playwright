@@ -193,21 +193,22 @@ npm run test:dev -- --tags "@{modulo}"    # solo un módulo
 6. Claude Code         → Ejecuta npm run test:dev -- --tags "@{modulo}" localmente
                           URL del reporte: https://ole-ia-automation-playwright.surge.sh
                           (Los tests en rojo son esperados si hay discrepancias del paso 4)
+                          ⚠️  Evidencia: los screenshots de fallo se guardan en disco
+                          (reports/evidence/evidence-{slug}.png) SOLO en CI (process.env.CI).
+                          En local se embeden en el reporte HTML/JSON únicamente.
+                          En CI, scripts/jira-report-failures.js los lee y adjunta
+                          automáticamente a los bugs de Jira al finalizar la pipeline.
 
-7. atlassian-manager   → Por cada discrepancia del paso 4 (si las hay):
-                          Crea bug [AUTO] vinculado con "Blocks" al ticket original
-                          Verificar con JQL si el bug ya existe antes de crear
-
-8. github-manager      → Crea PR feature/{ticket-key}-{modulo} → main
+7. github-manager      → Crea PR feature/{ticket-key}-{modulo} → main
                           Título: [AUTO] {ticket-key} — {Modulo}: E2E automation
-                          Body: tabla de escenarios + URL Surge + bugs creados
+                          Body: tabla de escenarios + URL Surge
                           Devuelve la URL del PR
+                          ↳ El flujo del orquestador termina aquí.
 
-9. atlassian-manager   → Comenta en el ticket:
-                          - Escenarios cubiertos
-                          - 📊 Reporte: https://ole-ia-automation-playwright.surge.sh
-                          - 🔀 PR URL
-                          - 🐛 Bugs creados (si los hay)
+   ⚠️  TODO el reporte en Jira ocurre desde CI (GitHub Actions), NO desde el orquestador:
+       - Al hacer push (paso 5), GitHub Actions ejecuta los tests
+       - scripts/jira-report-failures.js detecta fallos, crea bugs [AUTO] con evidencia
+       - Comenta en el ticket Jira con los resultados y URL del reporte Surge
 ```
 
 **Regla general**: Si cualquier agente falla, devuelve resultado vacío o lanza error, el architect debe **detenerse inmediatamente** y reportar:

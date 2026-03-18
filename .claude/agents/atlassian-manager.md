@@ -199,6 +199,17 @@ Cuando el `playwright-architect` necesite contexto de Jira para automatizar una 
 
 ## Flujo de trabajo al detectar fallo de tests
 
+### Desde la pipeline de CI (automático)
+En GitHub Actions, el script `scripts/jira-report-failures.js` se ejecuta automáticamente
+después de los tests. Ese script:
+- Lee `reports/cucumber-report.json` para encontrar escenarios fallidos
+- Lee el screenshot desde `reports/evidence/evidence-{slug}.png` (guardado en disco **solo en CI**)
+- Crea el bug `[AUTO]` via REST API y adjunta el screenshot como evidencia
+
+En local, los screenshots de fallo **no se guardan en disco** — solo se embeden en el
+reporte HTML/JSON. Por eso el reporte de bugs con evidencia es exclusivo de la pipeline CI.
+
+### Desde el orquestador (manual/healer)
 1. **Recibe el error** del test fallido (nombre del escenario + mensaje de error + ruta del screenshot si existe)
 2. **Identifica el ticket relacionado** por el tag del feature (`@OLE-XX`)
 3. **Crea el bug** con formato estándar

@@ -183,6 +183,13 @@ Given('step en español', async function (this: CustomWorld) {
 3. **TypeScript estricto** — sin errores de compilación
 4. **`waitFor` siempre** — antes de interactuar con cualquier elemento
 5. **No duplicar** — revisar steps existentes antes de crear nuevos
+6. **El plan BDD es la fuente de verdad para los valores esperados** — copia los valores del plan BDD **verbatim** en el `.feature`. No inventes, modifiques ni "mejores" ningún valor esperado (URLs, mensajes de error, textos). El browser solo sirve para verificar selectores, nunca para determinar qué valor debe ir en un `Then`.
+
+   **Ejemplo correcto:**
+   - Plan BDD dice: `Y la URL de la página es "/products"`
+   - App muestra: `/inventory.html`
+   - El `.feature` debe decir: `/products` ← el plan manda
+   - El test fallará intencionalmente — eso es un bug de la app, no del test
 
 ---
 
