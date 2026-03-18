@@ -47,20 +47,16 @@ jobs:
           CUCUMBER_PUBLISH_TOKEN: ${{ secrets.CUCUMBER_PUBLISH_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.tags }}" ]; then
-            npm run test:dev -- --tags "${{ github.event.inputs.tags }}" 2>&1 | tee test-output.txt
+            npm run test:dev -- --tags "${{ github.event.inputs.tags }}"
           else
-            npm run test:dev 2>&1 | tee test-output.txt
+            npm run test:dev
           fi
-          CUCUMBER_URL=$(grep -o 'https://reports.cucumber.io/reports/[^[:space:]]*' test-output.txt | head -1)
-          echo "cucumber_url=$CUCUMBER_URL" >> $GITHUB_OUTPUT
 
-      - name: Upload HTML report
+      - name: Deploy report to Surge
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cucumber-report
-          path: reports/cucumber-report.html
-          retention-days: 30
+        run: |
+          npm install -g surge
+          surge reports/ ole-ia-automation-playwright.surge.sh --token ${{ secrets.SURGE_TOKEN }}
 
       - name: Upload evidence screenshots
         if: always()
@@ -82,5 +78,5 @@ jobs:
               "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "branch": "${{ github.ref_name }}",
               "status": "${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}",
-              "resultado": "<${{ steps.run-tests.outputs.cucumber_url || 'https://reports.cucumber.io' }}|📊 Ver Reporte>"
+              "resultado": "<https://ole-ia-automation-playwright.surge.sh|📊 Ver Reporte>"
             }
