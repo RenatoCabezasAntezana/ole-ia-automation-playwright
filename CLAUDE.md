@@ -51,8 +51,8 @@ Claude Code (orquestador) ejecuta directamente:
 ```bash
 npm run test:dev -- --tags "@{modulo}"
 ```
-- Capturar la URL de Cucumber Reports del stdout (línea con `https://reports.cucumber.io/reports/`)
-- Guardar esa URL para usarla en los pasos siguientes
+- El reporte HTML se genera en `reports/cucumber-report.html`
+- La URL permanente del reporte es: `https://ole-ia-automation-playwright.surge.sh`
 - ⚠️ Si el comando falla por error de configuración (no por tests en rojo): detener y reportar. Los tests en rojo son esperados si hay discrepancias conocidas del Paso 4.
 
 ### Paso 7 — Crear bugs por discrepancias conocidas (si las hay)
@@ -75,7 +75,7 @@ Invocar el agente `github-manager`:
 Invocar el agente `atlassian-manager`:
 - Comentar en el ticket con los escenarios cubiertos y los archivos creados
 - Incluir el comando de ejecución: `npm run test:dev -- --tags "@{modulo}"`
-- Incluir `📊 Reporte: {cucumber_reports_url}`
+- Incluir `📊 Reporte: https://ole-ia-automation-playwright.surge.sh`
 - Incluir `🔀 PR: {pr_url}`
 - Si se crearon bugs en el paso 7, mencionarlos con sus keys
 
@@ -159,7 +159,9 @@ El workflow `.github/workflows/e2e.yml` ejecuta los tests automáticamente en ca
 | `STANDARD_PASSWORD` | Contraseña del usuario estándar |
 | `LOCKED_USER` | Usuario bloqueado |
 | `LOCKED_PASSWORD` | Contraseña del usuario bloqueado |
-| `CUCUMBER_PUBLISH_TOKEN` | Token de Cucumber Reports para URLs persistentes |
+| `SURGE_TOKEN` | Token de Surge.sh para publicar el reporte (`npx surge token`) |
+| `SLACK_WEBHOOK_URL` | URL del webhook del Slack Workflow Builder |
+| `CUCUMBER_PUBLISH_TOKEN` | (Opcional) Token de Cucumber Reports para URLs persistentes |
 
-El Paso 4 del flujo principal captura la URL de Cucumber Reports del stdout. Si los tests se ejecutan vía GitHub Actions, la URL del run tiene el formato:
-`https://github.com/{owner}/{repo}/actions/runs/{run_id}`
+**Reporte publicado en:** `https://ole-ia-automation-playwright.surge.sh`
+Cada ejecución de Actions sobreescribe el dominio con el reporte más reciente y notifica a Slack.
