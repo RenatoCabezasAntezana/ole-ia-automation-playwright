@@ -1,5 +1,7 @@
 const fs = require('fs');
 const https = require('https');
+const path = require('path');
+const os = require('os');
 
 const JIRA_URL = process.env.JIRA_URL?.replace(/\/$/, '');
 const JIRA_EMAIL = process.env.JIRA_EMAIL;
@@ -44,13 +46,47 @@ function jiraRequest(method, path, body) {
   });
 }
 
-async function bugExists(summary) {
-  const jql = encodeURIComponent(`project = ${JIRA_PROJECT_KEY} AND issuetype = Bug AND summary ~ "[AUTO]" AND summary ~ "${summary.slice(0, 50)}" ORDER BY created DESC`);
+function attachScreenshot(issueKey, screenshotBuffer, filename) {
+  return new Promise((resolve, reject) => {
+    const boundary = `----FormBoundary${Date.now()}`;
+    const url = new URL(`${JIRA_URL}/rest/api/3/issue/${issueKey}/attachments`);
+
+    const header = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: image/png\r\n\r\n`
+    );
+    const footer = Buffer.from(`\r\n--${boundary}--\r\n`);
+    const body = Buffer.concat([header, screenshotBuffer, footer]);
+
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'X-Atlassian-Token': 'no-check',
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': body.length,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function bugExists(scenario) {
+  const jql = encodeURIComponent(`project = ${JIRA_PROJECT_KEY} AND issuetype = Bug AND summary ~ "[AUTO]" AND summary ~ "${scenario.slice(0, 50)}" ORDER BY created DESC`);
   const res = await jiraRequest('GET', `/rest/api/3/search?jql=${jql}&maxResults=1`);
   return res.body.total > 0 ? res.body.issues[0].key : null;
 }
 
-async function createBug(scenario, error) {
+async function createBug(scenario, error, screenshotBuffer) {
   const summary = `[AUTO] Fallo en test: ${scenario}`;
   const existing = await bugExists(scenario.slice(0, 50));
   if (existing) {
@@ -83,13 +119,25 @@ async function createBug(scenario, error) {
     }
   });
 
-  if (res.status === 201) {
-    console.log(`✅ Bug creado: ${res.body.key} — ${summary}`);
-    return res.body.key;
-  } else {
+  if (res.status !== 201) {
     console.log(`❌ Error creando bug: ${JSON.stringify(res.body)}`);
     return null;
   }
+
+  const bugKey = res.body.key;
+  console.log(`✅ Bug creado: ${bugKey} — ${summary}`);
+
+  if (screenshotBuffer) {
+    const filename = `evidence-${scenario.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`;
+    const status = await attachScreenshot(bugKey, screenshotBuffer, filename);
+    if (status === 200) {
+      console.log(`📎 Evidencia adjuntada a ${bugKey}`);
+    } else {
+      console.log(`⚠️  No se pudo adjuntar evidencia (status ${status})`);
+    }
+  }
+
+  return bugKey;
 }
 
 async function main() {
@@ -99,12 +147,25 @@ async function main() {
   for (const feature of report) {
     for (const element of feature.elements || []) {
       const failedStep = element.steps?.find(s => s.result?.status === 'failed');
-      if (failedStep) {
-        failures.push({
-          scenario: element.name,
-          error: failedStep.result?.error_message?.split('\n')[0] || 'Unknown error',
-        });
+      if (!failedStep) continue;
+
+      // Screenshot está en los embeddings del After hook
+      let screenshotBuffer = null;
+      for (const hook of element.after || []) {
+        for (const embedding of hook.embeddings || []) {
+          if (embedding.mime_type === 'image/png') {
+            screenshotBuffer = Buffer.from(embedding.data, 'base64');
+            break;
+          }
+        }
+        if (screenshotBuffer) break;
       }
+
+      failures.push({
+        scenario: element.name,
+        error: failedStep.result?.error_message?.split('\n')[0] || 'Unknown error',
+        screenshotBuffer,
+      });
     }
   }
 
@@ -114,8 +175,8 @@ async function main() {
   }
 
   console.log(`\n🐛 Found ${failures.length} failed scenario(s). Reporting to Jira...\n`);
-  for (const { scenario, error } of failures) {
-    await createBug(scenario, error);
+  for (const { scenario, error, screenshotBuffer } of failures) {
+    await createBug(scenario, error, screenshotBuffer);
   }
 }
 
