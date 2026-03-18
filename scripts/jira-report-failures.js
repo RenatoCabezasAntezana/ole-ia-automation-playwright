@@ -1,13 +1,17 @@
 const fs = require('fs');
 const https = require('https');
 
-const JIRA_URL = process.env.JIRA_URL?.replace(/\/$/, '');
-const JIRA_EMAIL = process.env.JIRA_EMAIL;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || 'SB';
-const JIRA_TICKET_KEY = process.env.JIRA_TICKET_KEY || null;
+const JIRA_URL = process.env.ATLASSIAN_BASE_URL?.replace(/\/$/, '');
+const JIRA_EMAIL = process.env.ATLASSIAN_EMAIL;
+const JIRA_API_TOKEN = process.env.ATLASSIAN_API_TOKEN;
 const REPORT_PATH = 'reports/cucumber-report.json';
 const SURGE_URL = 'https://ole-ia-automation-playwright.surge.sh';
+
+// Extraer ticket key desde el nombre de la rama (ej: feature/SB-96-login → SB-96)
+const BRANCH = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || '';
+const branchMatch = BRANCH.match(/([A-Z]+-\d+)/);
+const JIRA_TICKET_KEY = branchMatch ? branchMatch[1] : null;
+const JIRA_PROJECT_KEY = JIRA_TICKET_KEY ? JIRA_TICKET_KEY.split('-')[0] : null;
 
 if (!JIRA_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {
   console.log('⚠️  Jira credentials not set, skipping bug reporting.');
@@ -90,6 +94,18 @@ async function createBug(scenario, error, screenshotBuffer) {
   const existing = await bugExists(scenario.slice(0, 50));
   if (existing) {
     console.log(`⚠️  Bug ya existe: ${existing} — ${summary}`);
+    if (JIRA_TICKET_KEY) {
+      const linkRes = await jiraRequest('POST', '/rest/api/3/issueLink', {
+        type: { name: 'Blocks' },
+        inwardIssue: { key: JIRA_TICKET_KEY },
+        outwardIssue: { key: existing },
+      });
+      if (linkRes.status === 201) {
+        console.log(`🔗 ${existing} vinculado como "blocks" a ${JIRA_TICKET_KEY}`);
+      } else {
+        console.log(`⚠️  No se pudo vincular ${existing} a ${JIRA_TICKET_KEY} (status ${linkRes.status})`);
+      }
+    }
     return existing;
   }
 
@@ -129,11 +145,11 @@ async function createBug(scenario, error, screenshotBuffer) {
   if (JIRA_TICKET_KEY) {
     const linkRes = await jiraRequest('POST', '/rest/api/3/issueLink', {
       type: { name: 'Blocks' },
-      inwardIssue: { key: bugKey },
-      outwardIssue: { key: JIRA_TICKET_KEY },
+      inwardIssue: { key: JIRA_TICKET_KEY },
+      outwardIssue: { key: bugKey },
     });
     if (linkRes.status === 201) {
-      console.log(`🔗 ${bugKey} vinculado como "blocks" a ${JIRA_TICKET_KEY}`);
+      console.log(`🔗 ${bugKey} blocks ${JIRA_TICKET_KEY}`);
     } else {
       console.log(`⚠️  No se pudo vincular ${bugKey} a ${JIRA_TICKET_KEY} (status ${linkRes.status})`);
     }
