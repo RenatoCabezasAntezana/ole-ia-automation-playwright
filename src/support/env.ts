@@ -23,5 +23,9 @@ export const ENV = {
       user: process.env.LOCKED_USER || '',
       password: process.env.LOCKED_PASSWORD || '',
     },
+    wrongPassword: {
+      user: process.env.STANDARD_USER || '',
+      password: process.env.WRONG_PASSWORD || 'wrong_password',
+    },
   },
 };
