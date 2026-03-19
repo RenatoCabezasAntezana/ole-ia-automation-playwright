@@ -10,8 +10,7 @@ const SURGE_URL = 'https://ole-ia-automation-playwright.surge.sh';
 // Extraer ticket key desde el nombre de la rama (ej: feature/SB-96-login → SB-96)
 const BRANCH = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || '';
 const branchMatch = BRANCH.match(/([A-Z]+-\d+)/);
-const JIRA_TICKET_KEY = 'SB-96';
-//branchMatch ? branchMatch[1] : null;
+const JIRA_TICKET_KEY = branchMatch ? branchMatch[1] : null;
 const JIRA_PROJECT_KEY = JIRA_TICKET_KEY ? JIRA_TICKET_KEY.split('-')[0] : null;
 
 if (!JIRA_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {

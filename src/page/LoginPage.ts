@@ -35,13 +35,25 @@ export class LoginPage extends BasePage {
     await this.loginButton.click();
   }
 
+  async login(username: string, password: string): Promise<void> {
+    await this.fillUsername(username);
+    await this.fillPassword(password);
+    await this.clickLoginButton();
+  }
+
   async getErrorMessage(): Promise<string> {
     await this.errorMessage.waitFor({ state: 'visible' });
-    return this.errorMessage.innerText();
+    return (await this.errorMessage.textContent()) ?? '';
   }
 
   async getCurrentPath(): Promise<string> {
     const url = new URL(this.page.url());
     return url.pathname;
+  }
+
+  async getProductsHeading(): Promise<string> {
+    const heading = this.page.getByRole('heading', { name: 'Products' });
+    await heading.waitFor({ state: 'visible' });
+    return (await heading.textContent()) ?? '';
   }
 }
