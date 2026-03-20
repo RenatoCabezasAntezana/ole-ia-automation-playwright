@@ -19,7 +19,7 @@ const CREDENTIALS: Record<string, { user: string; password: string }> = {
   },
 };
 
-Given('que el cliente se encuentra en la página de inicio de sesión de Swag Labs', async function (this: CustomWorld) {
+Given('que el cliente está en la página de inicio de sesión', async function (this: CustomWorld) {
   const loginPage = new LoginPage(this.page);
   await loginPage.navegar();
 });
@@ -39,10 +39,10 @@ Then('el sistema lo redirige a {string}', async function (this: CustomWorld, rut
   expect(urlActual).toContain(rutaEsperada);
 });
 
-Then('se muestra el catálogo de productos con el título {string}', async function (this: CustomWorld, tituloEsperado: string) {
+Then('el cliente puede ver el catálogo de productos', async function (this: CustomWorld) {
   const loginPage = new LoginPage(this.page);
   const titulo = await loginPage.obtenerTituloInventario();
-  expect(titulo.trim()).toBe(tituloEsperado);
+  expect(titulo.trim()).toBe('Products');
 });
 
 Then('el sistema no permite el ingreso', async function (this: CustomWorld) {
@@ -51,17 +51,16 @@ Then('el sistema no permite el ingreso', async function (this: CustomWorld) {
   expect(urlActual).not.toContain('/inventory.html');
 });
 
-Then('permanece en la página de inicio de sesión', async function (this: CustomWorld) {
-  const loginPage = new LoginPage(this.page);
-  const urlActual = await loginPage.obtenerUrlActual();
-  expect(urlActual).toContain('/');
-  expect(urlActual).not.toContain('/inventory.html');
-});
-
-Then('se muestra el mensaje de error {string}', async function (this: CustomWorld, mensajeEsperado: string) {
+Then('muestra el mensaje de error {string}', async function (this: CustomWorld, mensajeEsperado: string) {
   const loginPage = new LoginPage(this.page);
   const mensajeActual = await loginPage.obtenerMensajeError();
   expect(mensajeActual).toContain(mensajeEsperado);
+});
+
+Then('el cliente permanece en la página de inicio de sesión', async function (this: CustomWorld) {
+  const loginPage = new LoginPage(this.page);
+  const urlActual = await loginPage.obtenerUrlActual();
+  expect(urlActual).not.toContain('/inventory.html');
 });
 
 Then('el sistema deniega el acceso', async function (this: CustomWorld) {
