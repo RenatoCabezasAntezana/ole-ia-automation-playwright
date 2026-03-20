@@ -6,6 +6,7 @@ export class LoginPage extends BasePage {
   private readonly passwordInput: Locator;
   private readonly loginButton: Locator;
   private readonly errorMessage: Locator;
+  private readonly productsTitle: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -13,6 +14,7 @@ export class LoginPage extends BasePage {
     this.passwordInput = this.page.locator("[data-test='password']");
     this.loginButton = this.page.locator("[data-test='login-button']");
     this.errorMessage = this.page.locator("[data-test='error']");
+    this.productsTitle = this.page.locator("[data-test='title']");
   }
 
   async goToLoginPage(): Promise<void> {
@@ -51,9 +53,8 @@ export class LoginPage extends BasePage {
     return url.pathname;
   }
 
-  async getProductsHeading(): Promise<string> {
-    const heading = this.page.getByRole('heading', { name: 'Products' });
-    await heading.waitFor({ state: 'visible' });
-    return (await heading.textContent()) ?? '';
+  async getProductsTitle(): Promise<string> {
+    await this.productsTitle.waitFor({ state: 'visible' });
+    return (await this.productsTitle.textContent()) ?? '';
   }
 }
