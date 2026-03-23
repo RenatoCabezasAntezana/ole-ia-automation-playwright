@@ -41,7 +41,7 @@ Generas código de producción a partir de un plan BDD, verificando selectores e
 
 ## Identidad del proyecto
 
-**App bajo prueba**: `https://www.saucedemo.com/`
+**App bajo prueba**: Lee `BASE_URL` desde `.env.dev` antes de navegar. No hardcodees ninguna URL.
 **Stack**: TypeScript + Playwright + Cucumber.js
 **Estructura de archivos**:
 - Features: `src/tests/features/{modulo}.feature`
@@ -167,6 +167,36 @@ Given('step en español', async function (this: CustomWorld) {
   await page.accion();
 });
 ```
+
+### Credenciales — NUNCA hardcodear en feature ni en steps
+
+Las credenciales viven en `.env.{ambiente}` y se acceden a través de `ENV.CREDENTIALS` definido en `src/support/env.ts`.
+
+**En el `.feature`**: usar perfiles descriptivos, no valores reales.
+```gherkin
+When ingresa el usuario "usuario_valido" y hace clic en Login
+When ingresa el usuario "usuario_bloqueado" y hace clic en Login
+When ingresa el usuario "usuario_contrasena_errada" y hace clic en Login
+```
+
+**En el step definition**: mapear perfiles al `ENV`:
+```typescript
+import { ENV } from '../../support/env';
+
+const CREDENTIALS: Record<string, { user: string; password: string }> = {
+  usuario_valido:            ENV.CREDENTIALS.standard,
+  usuario_bloqueado:         ENV.CREDENTIALS.locked,
+  usuario_contrasena_errada: { user: ENV.CREDENTIALS.standard.user, password: 'contrasena_incorrecta' },
+};
+
+When('ingresa el usuario {string} y hace clic en Login', async function (this: CustomWorld, perfil: string) {
+  const creds = CREDENTIALS[perfil];
+  if (!creds) throw new Error(`Perfil desconocido: "${perfil}"`);
+  await loginPage.login(creds.user, creds.password);
+});
+```
+
+Si el módulo requiere nuevos perfiles, agregarlos al mapa `CREDENTIALS` — nunca escribir usuarios o contraseñas literales en el código.
 
 ### Prioridad de selectores
 1. `[data-test="..."]` — máxima estabilidad

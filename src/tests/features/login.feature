@@ -1,29 +1,33 @@
 @login
 Feature: Login
 
-  Como cliente de Sauce Demo,
-  Quiero iniciar sesión en la plataforma,
-  Para acceder al catálogo de productos y realizar compras.
+  Como usuario registrado,
+  Quiero poder iniciar sesión con mis credenciales,
+  Para acceder al sistema de forma segura.
 
   Background:
-    Given que el cliente se encuentra en la página de inicio de sesión
+    Given que el usuario se encuentra en la página de login
 
   @smoke
-  Scenario: Acceso exitoso al catálogo de productos
-    When ingresa el usuario "usuario_valido" y hace clic en Login
-    Then el sistema lo redirige a la página principal de productos con la url "/products"
-    And se muestra el título "Products" en la pantalla
+  Scenario: Login exitoso con credenciales válidas
+    When ingresa el usuario "admin_local" y hace clic en Iniciar sesión
+    Then ve el mensaje "Inicio de sesion exitoso. Redirigiendo..."
+    And es redirigido al dashboard en menos de 2 segundos
 
   @regression
-  Scenario: Intento de acceso con contraseña incorrecta
-    When ingresa el usuario "usuario_contrasena_errada" y hace clic en Login
-    Then el sistema no permite el ingreso
-    And muestra el mensaje de error "Epic sadface: Username and password do not match any user in this service"
-    And el cliente permanece en la página de inicio de sesión
+  Scenario: Error al ingresar credenciales incorrectas
+    When ingresa el usuario "usuario_invalido_local" y hace clic en Iniciar sesión
+    Then ve el mensaje "Usuario o contraseña incorrectos. Verifica tus datos e intenta nuevamente."
+    And permanece en la página de login
 
   @regression
-  Scenario: Intento de acceso con cuenta bloqueada
-    When ingresa el usuario "usuario_bloqueado" y hace clic en Login
-    Then el sistema deniega el acceso
-    And muestra el mensaje de error "Epic sadface: Sorry, this user has been locked out."
-    And el cliente permanece en la página de inicio de sesión
+  Scenario: Error al ingresar con usuario bloqueado
+    When ingresa el usuario "bloqueado_local" y hace clic en Iniciar sesión
+    Then ve el mensaje "Tu cuenta ha sido bloqueada. Contacta al administrador para recuperar el acceso."
+    And permanece en la página de login
+
+  @regression
+  Scenario: Error al intentar iniciar sesión con campos vacíos
+    When hace clic en Iniciar sesión sin completar ningún campo
+    Then ve el mensaje "Por favor completa todos los campos."
+    And permanece en la página de login
