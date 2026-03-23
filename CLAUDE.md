@@ -18,6 +18,8 @@ Hay dos modos de ejecución según cómo el usuario proporcione el ticket:
 Cuando el usuario proporcione **únicamente un número de ticket Jira** (ej. `SB-78`, `OLE-12`), ejecutar automáticamente el siguiente flujo sin pedir confirmación ni input adicional:
 
 ### Paso 1 — Leer el ticket
+> 🤖 Avisar al usuario: `[atlassian-manager] Leyendo el ticket {ticket-key} desde Jira...`
+
 Invocar el agente `atlassian-manager`:
 - Leer el ticket con `mcp__atlassian__getJiraIssue`
 - Extraer **solo la descripción** del ticket (campo `description`)
@@ -25,6 +27,8 @@ Invocar el agente `atlassian-manager`:
 - ⚠️ Si falla o el ticket no existe: detener y reportar al usuario. No continuar.
 
 ### Paso 2 — Crear rama en GitHub
+> 🤖 Avisar al usuario: `[github-manager] Creando rama feature/{ticket-key}-{modulo} desde main...`
+
 Invocar el agente `github-manager`:
 - Crear rama `feature/{ticket-key}-{modulo}` desde `main`
 - Ejemplo: `feature/SB-85-login`
@@ -32,14 +36,18 @@ Invocar el agente `github-manager`:
 - ⚠️ Si falla: detener y reportar. No continuar.
 
 ### Paso 3 — Planificar los tests
+> 🤖 Avisar al usuario: `[playwright-planner] Explorando la UI del módulo {modulo} y generando el plan BDD...`
+
 Invocar el agente `playwright-planner` pasándole los criterios extraídos en el paso 1:
-- Navegar `https://www.saucedemo.com/` en tiempo real
+- Navegar la app en tiempo real (leer BASE_URL desde `.env.dev`)
 - Explorar la UI del módulo correspondiente
 - Guardar screenshots en `reports/evidence/planner-{modulo}-{flujo}-{timestamp}.png`
 - Generar plan BDD en Markdown con escenarios Given/When/Then en español
 - ⚠️ Si falla o devuelve plan vacío: detener y reportar. No continuar.
 
 ### Paso 4 — Generar el código
+> 🤖 Avisar al usuario: `[playwright-generator] Generando feature file, Page Object y step definitions para {modulo}...`
+
 Invocar el agente `playwright-generator` pasándole el plan del paso 3:
 - Generar `src/tests/features/{modulo}.feature`
 - Generar `src/page/{Modulo}Page.ts`
@@ -49,6 +57,8 @@ Invocar el agente `playwright-generator` pasándole el plan del paso 3:
 - ⚠️ Si falla o hay errores de compilación sin resolver: detener y reportar. No continuar.
 
 ### Paso 5 — Ejecutar los tests y capturar el reporte
+> 🤖 Avisar al usuario: `[orquestador] Ejecutando tests del módulo {modulo} en modo headless...`
+
 Claude Code (orquestador) ejecuta directamente en modo headless:
 ```bash
 HEADLESS=true npm run test:dev -- --tags "@{modulo}"
@@ -58,6 +68,8 @@ HEADLESS=true npm run test:dev -- --tags "@{modulo}"
 - ⚠️ Si el comando falla por error de configuración (no por tests en rojo): detener y reportar. Los tests en rojo son esperados si hay discrepancias conocidas del Paso 4.
 
 ### Paso 6 — Commitear y pushear el código generado
+> 🤖 Avisar al usuario: `[github-manager] Commiteando y pusheando archivos del módulo {modulo}...`
+
 Invocar el agente `github-manager`:
 - Stagear solo los archivos del módulo generado
 - Commitear con mensaje: `feature({ticket-key}): add {modulo} E2E tests`
@@ -65,6 +77,8 @@ Invocar el agente `github-manager`:
 - ⚠️ Si el push falla: detener y reportar. No continuar.
 
 ### Paso 7 — Crear Pull Request
+> 🤖 Avisar al usuario: `[github-manager] Creando Pull Request hacia main...`
+
 Invocar el agente `github-manager`:
 - Crear PR desde `feature/{ticket-key}-{modulo}` hacia `main`
 - Título: `[AUTO] {ticket-key} — {Modulo}: E2E automation`
@@ -120,6 +134,8 @@ Si el error es de la app (no del código de automatización):
 Cuando el usuario proporcione `local` seguido de un número de ticket Jira (ej. `local SB-78`), ejecutar automáticamente el siguiente flujo sin pedir confirmación ni input adicional:
 
 ### Paso 1 — Leer el ticket
+> 🤖 Avisar al usuario: `[atlassian-manager] Leyendo el ticket {ticket-key} desde Jira...`
+
 Invocar el agente `atlassian-manager`:
 - Leer el ticket con `mcp__atlassian__getJiraIssue`
 - Extraer la descripción y los criterios de aceptación
@@ -127,20 +143,26 @@ Invocar el agente `atlassian-manager`:
 - ⚠️ Si falla o el ticket no existe: detener y reportar al usuario. No continuar.
 
 ### Paso 1.5 — Crear rama en GitHub
+> 🤖 Avisar al usuario: `[github-manager] Creando rama feature/{ticket-key}-{modulo} desde main...`
+
 Invocar el agente `github-manager`:
 - Crear rama `feature/{ticket-key}-{modulo}` desde `main`
 - Publicar la rama en el remoto (`git push -u origin`)
 - ⚠️ Si falla: detener y reportar. No continuar.
 
 ### Paso 2 — Planificar los tests
+> 🤖 Avisar al usuario: `[playwright-planner] Explorando la UI del módulo {modulo} en localhost y generando el plan BDD...`
+
 Invocar el agente `playwright-planner` pasándole los criterios extraídos en el paso 1:
-- Navegar `http://localhost:3000` en tiempo real
+- Navegar la app en tiempo real (leer BASE_URL desde `.env.dev`)
 - Explorar la UI del módulo correspondiente
 - Guardar screenshots en `reports/evidence/planner-{modulo}-{flujo}-{timestamp}.png`
 - Generar plan BDD en Markdown con escenarios Given/When/Then en español
 - ⚠️ Si falla o devuelve plan vacío: detener y reportar. No continuar.
 
 ### Paso 3 — Generar el código
+> 🤖 Avisar al usuario: `[playwright-generator] Generando feature file, Page Object y step definitions para {modulo}...`
+
 Invocar el agente `playwright-generator` pasándole el plan del paso 2:
 - Generar `src/tests/features/{modulo}.feature`
 - Generar `src/page/{Modulo}Page.ts`
@@ -149,6 +171,8 @@ Invocar el agente `playwright-generator` pasándole el plan del paso 2:
 - ⚠️ Si hay errores de compilación sin resolver: detener y reportar. No continuar.
 
 ### Paso 4 — Ejecutar los tests localmente
+> 🤖 Avisar al usuario: `[orquestador] Ejecutando tests del módulo {modulo} en modo headless...`
+
 Claude Code ejecuta directamente en modo headless:
 ```bash
 HEADLESS=true npm run test:dev -- --tags "@{modulo}"
@@ -161,12 +185,18 @@ HEADLESS=true npm run test:dev -- --tags "@{modulo}"
 **Si hay tests fallidos, clasificar cada fallo:**
 
 #### Error de código de automatización (selector roto, assertion incorrecta, TypeScript error)
+> 🤖 Avisar al usuario: `[playwright-healer] Diagnosticando y reparando error de automatización (intento {n}/2)...`
+
 - Invocar `playwright-healer` (máximo 2 intentos)
 - Re-ejecutar tests tras cada intento
-- Si el healer repara y los tests pasan → invocar `github-manager` para commitear y pushear el fix en la rama `feature/{ticket-key}-{modulo}`
+- Si el healer repara y los tests pasan:
+  > 🤖 Avisar al usuario: `[github-manager] Commiteando fix del healer en la rama feature/{ticket-key}-{modulo}...`
+  - Invocar `github-manager` para commitear y pushear el fix
 - Si tras 2 intentos sigue fallando → tratar como bug de la app (ver abajo)
 
 #### Bug de la app (comportamiento inesperado, mensaje incorrecto, flujo roto)
+> 🤖 Avisar al usuario: `[atlassian-manager] Creando bug [AUTO] en Jira vinculado a {ticket-key}...`
+
 Invocar el agente `atlassian-manager`:
 - Crear un bug `[AUTO]` en Jira con:
   - Título: `[AUTO] {ticket-key} — {modulo}: {nombre del escenario fallido}`
