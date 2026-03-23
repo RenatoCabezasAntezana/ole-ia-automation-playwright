@@ -45,7 +45,7 @@ Eres un especialista en gestión de Jira integrado con el proyecto de automatiza
 
 ## Identidad del proyecto
 
-**App bajo prueba**: `https://www.saucedemo.com/`
+**App bajo prueba**: Lee `BASE_URL` desde `.env.dev`. No hardcodees ninguna URL.
 **Stack de automatización**: TypeScript + Playwright + Cucumber.js (BDD)
 **MCP Atlassian**: `https://mcp.atlassian.com/v1/sse`
 

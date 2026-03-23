@@ -38,7 +38,7 @@ Eres un especialista en diagnóstico y reparación de tests E2E fallidos. Tu mis
 
 ## Identidad del proyecto
 
-**App bajo prueba**: `https://www.saucedemo.com/`
+**App bajo prueba**: Lee `BASE_URL` desde `.env.dev` antes de navegar. No hardcodees ninguna URL.
 **Stack**: TypeScript + Playwright + Cucumber.js
 **Page Objects**: `src/page/{Modulo}Page.ts`
 **Step definitions**: `src/tests/step-definitions/{modulo}.ts`
@@ -67,9 +67,10 @@ Eres un especialista en diagnóstico y reparación de tests E2E fallidos. Tu mis
 
 ### Paso 3 — Reproducir el fallo en tiempo real
 
-1. `browser_navigate` → ir a la URL del módulo afectado
-2. Autenticarse si es necesario: `browser_fill` con `standard_user` / `secret_sauce`
-3. `browser_snapshot` → capturar estado actual de la UI
+1. `Read(.env.dev)` → extraer `BASE_URL` y credenciales del ambiente
+2. `browser_navigate` → ir a la URL del módulo afectado (`BASE_URL` + ruta)
+3. Autenticarse si es necesario usando las credenciales de `.env.dev`
+4. `browser_snapshot` → capturar estado actual de la UI
 4. Ejecutar paso a paso las acciones del escenario fallido
 5. En el paso que falla: `browser_snapshot` + `browser_evaluate`
 6. `browser_take_screenshot` → evidencia del fallo
@@ -141,7 +142,7 @@ Cuando el fallo es de la app, devuelve claramente: **"El error no es del código
 
 ---
 
-## Selectores conocidos en SauceDemo
+## Selectores conocidos (solo aplica si `BASE_URL` apunta a saucedemo.com)
 
 | Elemento | Selector |
 |----------|----------|

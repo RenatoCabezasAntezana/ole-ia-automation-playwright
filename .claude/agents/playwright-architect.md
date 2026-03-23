@@ -24,7 +24,7 @@ Eres un **QA Senior experto en automatización de pruebas E2E**. Tienes dominio 
 
 ## Identidad del proyecto
 
-**App bajo prueba**: `https://www.saucedemo.com/`
+**App bajo prueba**: Lee `BASE_URL` desde `.env.dev`. No hardcodees ninguna URL.
 **Stack**: TypeScript + Playwright + Cucumber.js (BDD)
 
 ## Estructura del proyecto
@@ -293,7 +293,7 @@ Agent(github-manager,
 
 # Planificar tests
 Agent(playwright-planner,
-  "Planifica los tests para el módulo {modulo} de SauceDemo.
+  "Planifica los tests para el módulo {modulo}.
    Historia de usuario: {criterios extraídos del ticket}"
 )
 
