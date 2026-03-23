@@ -55,15 +55,14 @@ Leer los criterios de aceptación o la historia de usuario recibida.
 
 ### Paso 2 — Explorar la UI en tiempo real
 
+> **Objetivo exclusivo de esta exploración: identificar selectores.** No descubrir flujos nuevos ni ampliar el alcance del ticket.
+
 1. `Read(.env.dev)` → extraer el valor de `BASE_URL`
 2. `browser_navigate` → ir a `BASE_URL`
 3. Autenticarse si la app lo requiere, usando las credenciales definidas en `.env.dev`
-4. `browser_snapshot` → analizar todos los elementos interactivos
-4. Navegar todos los flujos del módulo:
-   - Flujo principal (happy path)
-   - Flujos alternativos
-   - Flujos de error
-5. `browser_take_screenshot` → guardar evidencia en `reports/evidence/planner-{modulo}-{flujo}-{timestamp}.png`
+4. `browser_snapshot` → identificar los selectores de los elementos mencionados en los criterios de aceptación del ticket
+5. Navegar **únicamente** los flujos descritos en el ticket — ni uno más
+6. `browser_take_screenshot` → guardar evidencia en `reports/evidence/planner-{modulo}-{flujo}-{timestamp}.png`
    - `{modulo}`: nombre del módulo en kebab-case (ej. `login`, `checkout`, `carrito`)
    - `{flujo}`: descripción corta del estado capturado (ej. `pagina-inicial`, `happy-path`, `error-credenciales`)
    - `{timestamp}`: epoch en milisegundos (`Date.now()`)
@@ -73,7 +72,9 @@ Leer los criterios de aceptación o la historia de usuario recibida.
 
 ### Paso 3 — Diseñar los escenarios BDD
 
-Para cada criterio de aceptación:
+**Genera ÚNICAMENTE los escenarios explícitamente definidos en los criterios de aceptación del ticket. Uno a uno, sin añadir ni inferir escenarios adicionales.**
+
+Para cada criterio de aceptación del ticket:
 - Título descriptivo del comportamiento
 - Escenario **independiente** (no depende de otro)
 - Cubre **un solo comportamiento**
@@ -123,10 +124,10 @@ Then {resultado esperado}
 
 ## Reglas de diseño
 
-1. **Independencia** — cada escenario parte desde cero
-2. **Un comportamiento por escenario**
-3. **Lenguaje de negocio** — qué hace el usuario, no cómo funciona el código
-4. **Cobertura completa**: happy path, errores y edge cases
+1. **Solo lo que dice el ticket** — genera exactamente los escenarios definidos en los criterios de aceptación. Si el ticket tiene 4 escenarios, el plan tiene 4 escenarios. No añadir edge cases, variantes ni escenarios que "podrían ser útiles".
+2. **Independencia** — cada escenario parte desde cero
+3. **Un comportamiento por escenario**
+4. **Lenguaje de negocio** — qué hace el usuario, no cómo funciona el código
 5. **Tags obligatorios**: `@smoke` para happy paths, `@regression` para variantes
 6. **El ticket es la fuente de verdad** — los valores esperados (URLs, mensajes de error, textos, etc.) se toman **literalmente de los criterios de aceptación del ticket**. La exploración de la app sirve **únicamente** para identificar selectores y estructura UI. Si la app muestra un valor distinto al del ticket, anótalo como discrepancia pero **nunca sobreescribas el criterio del ticket** en los escenarios BDD.
 
