@@ -27,5 +27,19 @@ export const ENV = {
       user: process.env.STANDARD_USER || '',
       password: process.env.WRONG_PASSWORD || 'wrong_password',
     },
+    local: {
+      admin: {
+        user: process.env.LOCAL_ADMIN_USER || '',
+        password: process.env.LOCAL_ADMIN_PASSWORD || '',
+      },
+      locked: {
+        user: process.env.LOCAL_LOCKED_USER || '',
+        password: process.env.LOCAL_LOCKED_PASSWORD || '',
+      },
+      invalid: {
+        user: process.env.LOCAL_INVALID_USER || '',
+        password: process.env.LOCAL_INVALID_PASSWORD || '',
+      },
+    },
   },
 };
