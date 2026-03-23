@@ -6,6 +6,15 @@ Proyecto de automatización E2E con TypeScript + Playwright + Cucumber.js (BDD) 
 
 ## Trigger — número de ticket Jira
 
+Hay dos modos de ejecución según cómo el usuario proporcione el ticket:
+
+- **Flujo completo** → el usuario proporciona únicamente el número de ticket (ej. `SB-78`): crea rama, genera código, corre tests, commitea y crea PR.
+- **Flujo local** → el usuario proporciona `local` seguido del número de ticket (ej. `local SB-78`): planifica, genera código, corre tests en `localhost:3000` y reporta resultados. Sin git, sin PR. Ver sección [Flujo local — validación en localhost](#flujo-local--validación-en-localhost).
+
+---
+
+## Flujo completo
+
 Cuando el usuario proporcione **únicamente un número de ticket Jira** (ej. `SB-78`, `OLE-12`), ejecutar automáticamente el siguiente flujo sin pedir confirmación ni input adicional:
 
 ### Paso 1 — Leer el ticket
@@ -103,6 +112,49 @@ Si el error es de la app (no del código de automatización):
 - GitHub Actions detectará el fallo, `jira-report-failures.js` creará el bug `[AUTO]`
   en Jira automáticamente con el screenshot de evidencia adjunto
 - No es necesario crear el bug manualmente desde el orquestador
+
+---
+
+## Flujo local — validación en localhost
+
+Cuando el usuario proporcione `local` seguido de un número de ticket Jira (ej. `local SB-78`), ejecutar automáticamente el siguiente flujo sin pedir confirmación ni input adicional:
+
+### Paso 1 — Leer el ticket
+Invocar el agente `atlassian-manager`:
+- Leer el ticket con `mcp__atlassian__getJiraIssue`
+- Extraer la descripción y los criterios de aceptación
+- Identificar el nombre del módulo y la URL local (se asume `http://localhost:3000` si no se especifica otra)
+- ⚠️ Si falla o el ticket no existe: detener y reportar al usuario. No continuar.
+
+### Paso 2 — Planificar los tests
+Invocar el agente `playwright-planner` pasándole los criterios extraídos en el paso 1:
+- Navegar `http://localhost:3000` en tiempo real
+- Explorar la UI del módulo correspondiente
+- Guardar screenshots en `reports/evidence/planner-{modulo}-{flujo}-{timestamp}.png`
+- Generar plan BDD en Markdown con escenarios Given/When/Then en español
+- ⚠️ Si falla o devuelve plan vacío: detener y reportar. No continuar.
+
+### Paso 3 — Generar el código
+Invocar el agente `playwright-generator` pasándole el plan del paso 2:
+- Generar `src/tests/features/{modulo}.feature`
+- Generar `src/page/{Modulo}Page.ts`
+- Generar `src/tests/step-definitions/{modulo}.ts`
+- Ejecutar `npx tsc --noEmit` para verificar compilación
+- ⚠️ Si hay errores de compilación sin resolver: detener y reportar. No continuar.
+
+### Paso 4 — Ejecutar los tests localmente
+Claude Code ejecuta directamente en modo headless:
+```bash
+HEADLESS=true npm run test:dev -- --tags "@{modulo}"
+```
+
+### Paso 5 — Reportar resultados al usuario
+Mostrar al usuario:
+- Tabla de escenarios con resultado (✅ pasó / ❌ falló)
+- Discrepancias detectadas entre el ticket y la app
+- URL del reporte de Cucumber (si se generó)
+
+> No se realiza ninguna operación git. No se crea rama, commit, ni PR.
 
 ---
 
