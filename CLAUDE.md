@@ -148,13 +148,75 @@ Claude Code ejecuta directamente en modo headless:
 HEADLESS=true npm run test:dev -- --tags "@{modulo}"
 ```
 
-### Paso 5 — Reportar resultados al usuario
+### Paso 5 — Clasificar los fallos
+
+**Si todos los tests pasan:** reportar al usuario con tabla de resultados.
+
+**Si hay tests fallidos, clasificar cada fallo:**
+
+#### Error de código de automatización (selector roto, assertion incorrecta, TypeScript error)
+- Invocar `playwright-healer` (máximo 2 intentos)
+- Re-ejecutar tests tras cada intento
+- Si el healer repara y los tests pasan → reportar al usuario (sin commit, sin git)
+- Si tras 2 intentos sigue fallando → tratar como bug de la app (ver abajo)
+
+#### Bug de la app (comportamiento inesperado, mensaje incorrecto, flujo roto)
+Invocar el agente `atlassian-manager`:
+- Crear un bug `[AUTO]` en Jira con:
+  - Título: `[AUTO] {ticket-key} — {modulo}: {nombre del escenario fallido}`
+  - Descripción: escenario fallido, mensaje de error, URL del reporte de Cucumber
+  - Screenshot de evidencia si está disponible en `reports/evidence/`
+- Vincular el bug al ticket padre `{ticket-key}` con `mcp__atlassian__createIssueLink`
+
+### Paso 6 — Reportar resultados al usuario
 Mostrar al usuario:
 - Tabla de escenarios con resultado (✅ pasó / ❌ falló)
-- Discrepancias detectadas entre el ticket y la app
+- Bugs creados en Jira (con su key y link)
 - URL del reporte de Cucumber (si se generó)
 
 > No se realiza ninguna operación git. No se crea rama, commit, ni PR.
+
+---
+
+## Trigger — retest de bugs vinculados
+
+Cuando el usuario proporcione `retest-{ticket-key}` (ej. `retest-SB-108`), ejecutar automáticamente el siguiente flujo sin pedir confirmación ni input adicional:
+
+### Paso 1 — Leer el ticket y obtener bugs vinculados
+Invocar el agente `atlassian-manager`:
+- Leer el ticket con `mcp__atlassian__getJiraIssue`
+- Buscar todos los bugs `[AUTO]` vinculados al ticket usando `mcp__atlassian__getJiraIssueRemoteIssueLinks` y/o JQL: `issueType = Bug AND text ~ "[AUTO]" AND issueLinks in linkedIssues("{ticket-key}")`
+- Extraer el módulo y los escenarios fallidos de cada bug
+- ⚠️ Si no hay bugs vinculados: reportar al usuario y detener.
+
+### Paso 2 — Ejecutar los tests del módulo
+Claude Code ejecuta directamente en modo headless:
+```bash
+HEADLESS=true npm run test:dev -- --tags "@{modulo}"
+```
+
+### Paso 3 — Clasificar los resultados
+
+**Si todos los tests pasan (bugs reparados):**
+Invocar el agente `atlassian-manager`:
+- Transicionar cada bug vinculado a `Done`
+- Comentar en cada bug con evidencia: URL del reporte + resumen de escenarios en verde
+- Comentar en el ticket padre que todos los bugs fueron verificados como resueltos
+
+**Si hay tests fallidos, clasificar cada fallo:**
+
+#### Error de código de automatización (selector roto, assertion incorrecta)
+Puede ocurrir si el dev cambió la UI al arreglar el bug:
+- Invocar `playwright-healer` (máximo 2 intentos)
+- Re-ejecutar los tests tras cada intento
+- Si el healer repara y los tests pasan → ir al bloque "todos los tests pasan" arriba
+- Si tras 2 intentos sigue fallando → tratar como bug de la app (ver abajo)
+
+#### Bug de la app (el bug sigue sin resolver)
+Invocar el agente `atlassian-manager`:
+- Comentar en el bug que los tests aún fallan + URL del reporte
+- No cambiar el estado del ticket — el bug permanece abierto
+- Reportar al usuario qué escenarios siguen fallando
 
 ---
 
