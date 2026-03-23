@@ -126,6 +126,12 @@ Invocar el agente `atlassian-manager`:
 - Identificar el nombre del módulo y la URL local (se asume `http://localhost:3000` si no se especifica otra)
 - ⚠️ Si falla o el ticket no existe: detener y reportar al usuario. No continuar.
 
+### Paso 1.5 — Crear rama en GitHub
+Invocar el agente `github-manager`:
+- Crear rama `feature/{ticket-key}-{modulo}` desde `main`
+- Publicar la rama en el remoto (`git push -u origin`)
+- ⚠️ Si falla: detener y reportar. No continuar.
+
 ### Paso 2 — Planificar los tests
 Invocar el agente `playwright-planner` pasándole los criterios extraídos en el paso 1:
 - Navegar `http://localhost:3000` en tiempo real
@@ -157,7 +163,7 @@ HEADLESS=true npm run test:dev -- --tags "@{modulo}"
 #### Error de código de automatización (selector roto, assertion incorrecta, TypeScript error)
 - Invocar `playwright-healer` (máximo 2 intentos)
 - Re-ejecutar tests tras cada intento
-- Si el healer repara y los tests pasan → reportar al usuario (sin commit, sin git)
+- Si el healer repara y los tests pasan → invocar `github-manager` para commitear y pushear el fix en la rama `feature/{ticket-key}-{modulo}`
 - Si tras 2 intentos sigue fallando → tratar como bug de la app (ver abajo)
 
 #### Bug de la app (comportamiento inesperado, mensaje incorrecto, flujo roto)
@@ -174,7 +180,7 @@ Mostrar al usuario:
 - Bugs creados en Jira (con su key y link)
 - URL del reporte de Cucumber (si se generó)
 
-> No se realiza ninguna operación git. No se crea rama, commit, ni PR.
+> No se crea PR. La rama queda publicada con el código generado y cualquier fix del healer commiteado.
 
 ---
 
