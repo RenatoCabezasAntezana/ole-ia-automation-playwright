@@ -75,6 +75,37 @@ Invocar el agente `github-manager`:
 
 ---
 
+## Flujo de verificación post-fix de bug
+
+Cuando el usuario proporcione el ticket de un bug `[AUTO]` que ya fue resuelto por el dev (ej. `SB-112`):
+
+### Paso 1 — Leer el bug ticket
+Invocar el agente `atlassian-manager`:
+- Leer el ticket con `mcp__atlassian__getJiraIssue`
+- Verificar que el ticket es un bug `[AUTO]` (creado por CI)
+- Extraer el módulo afectado y el ticket padre asociado
+- ⚠️ Si el ticket no existe o no es un bug `[AUTO]`: detener y reportar. No continuar.
+
+### Paso 2 — Ejecutar los tests del módulo
+Claude Code ejecuta directamente en modo headless:
+```bash
+HEADLESS=true npm run test:dev -- --tags "@{modulo}"
+```
+
+### Paso 3a — Si los tests pasan (bug verificado como resuelto)
+Invocar el agente `atlassian-manager`:
+- Transicionar el bug a `Done` con `mcp__atlassian__transitionJiraIssue`
+- Comentar en el bug con evidencia: URL del reporte Surge + resumen de escenarios en verde
+- Comentar en el **ticket padre** que el bug fue verificado como resuelto + URL del reporte
+
+### Paso 3b — Si los tests siguen fallando (bug no resuelto)
+Invocar el agente `atlassian-manager`:
+- Comentar en el bug que los tests aún fallan + URL del reporte Surge
+- No cambiar el estado del ticket
+- Reportar al usuario qué escenarios siguen fallando
+
+---
+
 ## Flujo cuando un test falla
 
 Cuando el usuario reporte un test fallido:
