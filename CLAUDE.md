@@ -98,7 +98,17 @@ Invocar el agente `atlassian-manager`:
 - Comentar en el bug con evidencia: URL del reporte Surge + resumen de escenarios en verde
 - Comentar en el **ticket padre** que el bug fue verificado como resuelto + URL del reporte
 
-### Paso 3b — Si los tests siguen fallando (bug no resuelto)
+### Paso 3b — Si los tests siguen fallando
+Clasificar el error antes de concluir que el bug no fue resuelto:
+
+**Si el error es de código** (selector roto, assertion incorrecta — puede ocurrir si el dev cambió la UI al arreglar el bug):
+- Invocar `playwright-healer` (máximo 2 intentos)
+- Si el healer repara → re-ejecutar los tests
+  - Si pasan → ir al Paso 3a (bug verificado como resuelto) + invocar `github-manager` para commitear y pushear el fix del healer en la rama activa del módulo
+  - Si siguen fallando → ir al bloque de "error de la app" abajo
+- Si el healer no puede reparar en 2 intentos → ir al bloque de "error de la app" abajo
+
+**Si el error es de la app** (el bug sigue sin resolver):
 Invocar el agente `atlassian-manager`:
 - Comentar en el bug que los tests aún fallan + URL del reporte Surge
 - No cambiar el estado del ticket
