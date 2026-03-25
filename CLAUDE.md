@@ -75,6 +75,35 @@ Invocar el agente `github-manager`:
 
 ---
 
+## Trigger — retest SB-##
+
+Cuando el usuario escriba `retest SB-##`, ejecutar automáticamente sin pedir confirmación:
+
+### Paso 1 — Ejecutar los tests del módulo
+- Buscar el `.feature` del módulo asociado al ticket para identificar el tag (ej. `@login`)
+- Ejecutar: `HEADLESS=true BASE_URL=http://localhost:3000 npm run test:dev -- --tags "@{modulo}"`
+
+### Paso 2 — Clasificar los fallos
+
+**Si todos los tests pasan:**
+- Invocar `atlassian-manager`: comentar en el ticket original que todos los tests pasan. Flujo termina.
+
+**Si hay fallos de código de automatización** (selector roto, assertion incorrecta, TypeScript error):
+- Invocar `playwright-healer` para reparar (máximo 2 intentos)
+- Re-ejecutar tras cada reparación
+- Si el healer repara exitosamente: continuar al Paso 3
+- Si tras 2 intentos sigue fallando por error de código: reportar al usuario y detener
+
+**Si hay fallos por bug de la app** (el test refleja el contrato del negocio y la app no lo cumple):
+- Buscar el bug `[AUTO]` vinculado al ticket (creado previamente)
+- Invocar `atlassian-manager`: comentar en el bug vinculado que el problema **aún no fue corregido**, incluyendo la fecha de retest y el error recibido
+- Flujo termina
+
+### Paso 3 — Si el healer reparó el código
+- Invocar `atlassian-manager`: comentar en el ticket original que el fix fue aplicado y los tests pasan
+
+---
+
 ## Flujo cuando un test falla
 
 Cuando el usuario reporte un test fallido:

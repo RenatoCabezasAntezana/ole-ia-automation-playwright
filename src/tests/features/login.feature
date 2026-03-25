@@ -12,7 +12,7 @@ Feature: Login
   Scenario: Login exitoso con credenciales válidas
     When ingresa el usuario "admin" y la contraseña "1234"
     And hace clic en el botón "Iniciar sesion"
-    Then ve el mensaje "Inicio de sesión exitoso. Redirigiendo..."
+    Then ve el mensaje "Inicio de sesion exitoso. Redirigiendo..."
     And es redirigido al dashboard en menos de 2 segundos
 
   @regression
